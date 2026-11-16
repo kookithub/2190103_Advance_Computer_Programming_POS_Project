@@ -2,7 +2,7 @@
 
 A desktop **point-of-sale and table-queue app for a small restaurant or bakery**, written in plain Java with Swing. You start from a small menu and pick one of two parts: the **cashier** (inventory, orders, discounts) or the **queue and table manager** (a first-come-first-served waiting list, seat the next party, free up a table).
 
-This was for 2190103 Advance Computer Programming, so a big part of the point was practising object-oriented design: the **Strategy**, **Singleton** and **Factory** patterns, plus encapsulation, abstraction and polymorphism.
+This was a team project for 2190103 Advance Computer Programming, so a big part of the point was practising object-oriented design: the **Strategy**, **Singleton** and **Factory** patterns, plus encapsulation, abstraction and polymorphism.
 
 ![Demo](docs/images/demo.gif)
 
@@ -40,7 +40,7 @@ This was for 2190103 Advance Computer Programming, so a big part of the point wa
 - The waiting list shows each party's place in line (#1, #2, ...) and size. The header shows "N of 5 free" and "N waiting".
 
 **UI toolkit (`Theme`)**
-- My own small design system in pure Swing: a colour palette, font fallbacks (Inter / Segoe UI / Helvetica Neue / Roboto / Arial), rounded cards with soft shadows, flat buttons with hover and pressed states, chips, a stepper and rounded text fields. All of it is drawn by hand with anti-aliased `Graphics2D`, no third-party look-and-feel.
+- Our own small design system in pure Swing: a colour palette, font fallbacks (Inter / Segoe UI / Helvetica Neue / Roboto / Arial), rounded cards with soft shadows, flat buttons with hover and pressed states, chips, a stepper and rounded text fields. All of it is drawn by hand with anti-aliased `Graphics2D`, no third-party look-and-feel.
 
 ## Screenshots
 
@@ -192,7 +192,7 @@ classDiagram
     Table --> Customer
 ```
 
-I kept the **business logic** (`Item`, `Inventory`, `Cashier`, the discount strategies, `Customer`, `Table`, `QueueManager`) apart from the **screens** (`MainApp`, `RestaurantGUI`, `QueueGUI`). None of the logic classes touch Swing, so they could be tested on their own or used with a different UI.
+We kept the **business logic** (`Item`, `Inventory`, `Cashier`, the discount strategies, `Customer`, `Table`, `QueueManager`) apart from the **screens** (`MainApp`, `RestaurantGUI`, `QueueGUI`). None of the logic classes touch Swing, so they could be tested on their own or used with a different UI.
 
 ## How it works
 
