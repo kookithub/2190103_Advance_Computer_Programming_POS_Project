@@ -1,145 +1,254 @@
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
+import java.util.List;
 
+/**
+ * Queue screen: add parties to the waiting list, seat the next one, free tables.
+ * Tables are cards (green chip = available, red chip = occupied) with their own "Free table" button.
+ */
 public class QueueGUI {
+    private static final int TABLES = 5;
+
     private JFrame frame;
-    private JPanel cardPanel;
-    private CardLayout cardLayout;
-    private JTextField nameField, sizeField, freeTableField;
-    private JTextArea outputArea, tablesTextArea, queueTextArea;
+    private JTextField nameField;
+    private Theme.Stepper sizeStepper;
+    private JPanel tablesPanel, waitingPanel;
+    private JLabel statusLabel, waitingCount, freeCount;
     private QueueManager manager;
 
     public QueueGUI() {
-        manager = QueueManager.getInstance(5); 
+        manager = QueueManager.getInstance(TABLES);
         frame = new JFrame("Restaurant Queue System");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setSize(600, 600);
+        frame.setSize(1120, 700);
+        frame.setLocationRelativeTo(null);
 
-        cardLayout = new CardLayout();
-        cardPanel = new JPanel(cardLayout);
+        JPanel root = new JPanel(new BorderLayout(0, 18));
+        root.setBackground(Theme.BG);
+        root.setBorder(BorderFactory.createEmptyBorder(20, 24, 14, 24));
+        root.add(buildHeader(), BorderLayout.NORTH);
 
-        cardPanel.add(createMainMenuPanel(), "MainMenu");
-        cardPanel.add(createTablesPanel(), "Tables");
-        cardPanel.add(createQueuePanel(), "Queue");
+        JPanel center = new JPanel(new BorderLayout(18, 0));
+        center.setOpaque(false);
+        center.add(buildForm(), BorderLayout.WEST);
+        center.add(buildTables(), BorderLayout.CENTER);
+        center.add(buildWaiting(), BorderLayout.EAST);
+        root.add(center, BorderLayout.CENTER);
 
-        frame.getContentPane().add(cardPanel);
+        statusLabel = Theme.label(" ", Font.PLAIN, 13f, Theme.MUTED);
+        root.add(statusLabel, BorderLayout.SOUTH);
+        frame.setContentPane(root);
+
+        refresh();
         frame.setVisible(true);
     }
 
-    private JPanel createMainMenuPanel() {
-        JPanel panel = new JPanel();
-        panel.setLayout(new GridLayout(0, 1));
-
-        nameField = new JTextField();
-        sizeField = new JTextField();
-        freeTableField = new JTextField();
-
-        JButton addButton = new JButton("Add Customer");
-        addButton.addActionListener(this::addCustomer);
-
-        JButton seatButton = new JButton("Seat Next Customer");
-        seatButton.addActionListener(this::seatNextCustomer);
-
-        JButton freeButton = new JButton("Free Table");
-        freeButton.addActionListener(this::freeTable);
-
-        JButton showTables = new JButton("Show Tables");
-        showTables.addActionListener(e -> {
-            tablesTextArea.setText(manager.getTablesInfo());
-            cardLayout.show(cardPanel, "Tables");
-        });
-
-        JButton showQueue = new JButton("Show Queue");
-        showQueue.addActionListener(e -> {
-            queueTextArea.setText(manager.getQueueInfo());
-            cardLayout.show(cardPanel, "Queue");
-        });
-
-        JButton backBtn = new JButton("Back to Main Menu");
-        backBtn.addActionListener(e -> {
+    private JPanel buildHeader() {
+        JPanel header = new JPanel(new BorderLayout());
+        header.setOpaque(false);
+        JPanel left = new JPanel();
+        left.setOpaque(false);
+        left.setLayout(new BoxLayout(left, BoxLayout.Y_AXIS));
+        JLabel title = Theme.label("Queue & Tables", Font.BOLD, 28f, Theme.TEXT);
+        JLabel sub = Theme.label("Seat walk-in parties in arrival order", Font.PLAIN, 14f, Theme.MUTED);
+        title.setAlignmentX(Component.LEFT_ALIGNMENT);
+        sub.setAlignmentX(Component.LEFT_ALIGNMENT);
+        left.add(title);
+        left.add(sub);
+        JPanel right = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
+        right.setOpaque(false);
+        Theme.Btn back = new Theme.Btn("← Menu", Theme.Kind.GHOST);
+        back.addActionListener(e -> {
             frame.dispose();
             new MainApp();
         });
-
-        outputArea = new JTextArea();
-        outputArea.setEditable(false);
-
-        panel.add(new JLabel("Customer Name:"));
-        panel.add(nameField);
-        panel.add(new JLabel("Party Size:"));
-        panel.add(sizeField);
-        panel.add(addButton);
-        panel.add(seatButton);
-        panel.add(new JLabel("Table to Free:"));
-        panel.add(freeTableField);
-        panel.add(freeButton);
-        panel.add(showTables);
-        panel.add(showQueue);
-        panel.add(backBtn);
-        panel.add(new JScrollPane(outputArea));
-
-        return panel;
+        right.add(back);
+        header.add(left, BorderLayout.WEST);
+        header.add(right, BorderLayout.EAST);
+        return header;
     }
 
-    private JPanel createTablesPanel() {
-        JPanel panel = new JPanel(new BorderLayout());
-        tablesTextArea = new JTextArea();
-        tablesTextArea.setEditable(false);
-        panel.add(new JScrollPane(tablesTextArea), BorderLayout.CENTER);
+    private JPanel buildForm() {
+        Theme.Card card = new Theme.Card(new BorderLayout(), 20, 20);
+        card.setPreferredSize(new Dimension(270, 0));
+        JPanel p = new JPanel();
+        p.setOpaque(false);
+        p.setLayout(new BoxLayout(p, BoxLayout.Y_AXIS));
 
-        JButton backButton = new JButton("Back");
-        backButton.addActionListener(e -> cardLayout.show(cardPanel, "MainMenu"));
-        panel.add(backButton, BorderLayout.SOUTH);
-
-        return panel;
+        p.add(left(Theme.label("New party", Font.BOLD, 18f, Theme.TEXT)));
+        p.add(Box.createVerticalStrut(16));
+        p.add(left(Theme.label("Customer name", Font.PLAIN, 12f, Theme.MUTED)));
+        p.add(Box.createVerticalStrut(4));
+        nameField = Theme.field(12);
+        nameField.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
+        nameField.addActionListener(e -> addCustomer());
+        p.add(left(nameField));
+        p.add(Box.createVerticalStrut(14));
+        p.add(left(Theme.label("Party size", Font.PLAIN, 12f, Theme.MUTED)));
+        p.add(Box.createVerticalStrut(4));
+        sizeStepper = new Theme.Stepper(2, 1, 20);
+        JPanel stepRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+        stepRow.setOpaque(false);
+        stepRow.add(sizeStepper);
+        p.add(left(stepRow));
+        p.add(Box.createVerticalStrut(18));
+        Theme.Btn add = new Theme.Btn("Add to queue", Theme.Kind.PRIMARY);
+        add.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
+        add.addActionListener(e -> addCustomer());
+        p.add(left(add));
+        p.add(Box.createVerticalStrut(22));
+        p.add(left(Theme.divider()));
+        p.add(Box.createVerticalStrut(22));
+        Theme.Btn seat = new Theme.Btn("Seat next customer", Theme.Kind.SECONDARY);
+        seat.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
+        seat.addActionListener(e -> {
+            int before = manager.getWaiting().size();
+            manager.seatNextCustomer();
+            refresh();
+            status(manager.getWaiting().size() < before ? "Seated the next party"
+                    : before == 0 ? "Nobody is waiting" : "No free table right now");
+        });
+        p.add(left(seat));
+        card.add(p, BorderLayout.NORTH);
+        return card;
     }
 
-    private JPanel createQueuePanel() {
-        JPanel panel = new JPanel(new BorderLayout());
-        queueTextArea = new JTextArea();
-        queueTextArea.setEditable(false);
-        panel.add(new JScrollPane(queueTextArea), BorderLayout.CENTER);
-
-        return panel;
+    private JComponent left(JComponent c) {
+        c.setAlignmentX(Component.LEFT_ALIGNMENT);
+        return c;
     }
 
-    private void addCustomer(ActionEvent e) {
-        String name = nameField.getText();
-        int size;
-        try {
-            size = Integer.parseInt(sizeField.getText());
-        } catch (NumberFormatException ex) {
-            outputArea.setText("Invalid party size.");
+    private JPanel buildTables() {
+        JPanel wrap = new JPanel(new BorderLayout(0, 10));
+        wrap.setOpaque(false);
+        JPanel head = new JPanel(new BorderLayout());
+        head.setOpaque(false);
+        head.add(Theme.label("Tables", Font.BOLD, 18f, Theme.TEXT), BorderLayout.WEST);
+        freeCount = Theme.label("", Font.PLAIN, 13f, Theme.MUTED);
+        head.add(freeCount, BorderLayout.EAST);
+        tablesPanel = new JPanel(new GridLayout(0, 2, 16, 16));
+        tablesPanel.setOpaque(false);
+        JPanel top = new JPanel(new BorderLayout());
+        top.setOpaque(false);
+        top.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
+        top.add(tablesPanel, BorderLayout.NORTH);
+        wrap.add(head, BorderLayout.NORTH);
+        wrap.add(top, BorderLayout.CENTER);
+        return wrap;
+    }
+
+    private JPanel buildWaiting() {
+        Theme.Card card = new Theme.Card(new BorderLayout(0, 12), 20, 20);
+        card.setPreferredSize(new Dimension(290, 0));
+        JPanel head = new JPanel(new BorderLayout());
+        head.setOpaque(false);
+        head.add(Theme.label("Waiting list", Font.BOLD, 18f, Theme.TEXT), BorderLayout.WEST);
+        waitingCount = Theme.label("", Font.PLAIN, 13f, Theme.MUTED);
+        head.add(waitingCount, BorderLayout.EAST);
+        waitingPanel = new JPanel();
+        waitingPanel.setOpaque(false);
+        waitingPanel.setLayout(new BoxLayout(waitingPanel, BoxLayout.Y_AXIS));
+        JPanel wrap = new JPanel(new BorderLayout());
+        wrap.setOpaque(false);
+        wrap.add(waitingPanel, BorderLayout.NORTH);
+        JScrollPane sp = new JScrollPane(wrap);
+        sp.setBorder(BorderFactory.createEmptyBorder());
+        sp.setOpaque(false);
+        sp.getViewport().setOpaque(false);
+        card.add(head, BorderLayout.NORTH);
+        card.add(sp, BorderLayout.CENTER);
+        return card;
+    }
+
+    private void addCustomer() {
+        String name = nameField.getText().trim();
+        if (name.isEmpty()) {
+            status("Enter a customer name");
             return;
         }
-        manager.addCustomer(new Customer(name, size));
-        updateOutput();
-        JOptionPane.showMessageDialog(frame, "Customer \"" + name + "\" added to the queue.");
+        manager.addCustomer(new Customer(name, sizeStepper.getValue()));
+        nameField.setText("");
+        refresh();
+        status("\"" + name + "\" added to the queue");
+        nameField.requestFocusInWindow();
     }
 
-    private void seatNextCustomer(ActionEvent e) {
-        manager.seatNextCustomer();
-        updateOutput();
-        tablesTextArea.setText(manager.getTablesInfo());
-        JOptionPane.showMessageDialog(frame, "Next customer has been seated.");
-    }
+    private JPanel tableCard(Table t) {
+        boolean free = t.isAvailable();
+        Theme.Card card = new Theme.Card(new BorderLayout(0, 10), 18, 16);
+        card.setPreferredSize(new Dimension(180, 150));
+        JPanel top = new JPanel(new BorderLayout());
+        top.setOpaque(false);
+        top.add(Theme.label("Table " + t.getTableNumber(), Font.BOLD, 17f, Theme.TEXT), BorderLayout.WEST);
+        JPanel chipWrap = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
+        chipWrap.setOpaque(false);
+        chipWrap.add(free ? new Theme.Chip("Available", Theme.OK_SOFT, Theme.OK)
+                : new Theme.Chip("Occupied", Theme.BAD_SOFT, Theme.BAD));
+        top.add(chipWrap, BorderLayout.EAST);
+        card.add(top, BorderLayout.NORTH);
 
-    private void freeTable(ActionEvent e) {
-        int tableNum;
-        try {
-            tableNum = Integer.parseInt(freeTableField.getText());
-        } catch (NumberFormatException ex) {
-            outputArea.setText("Invalid table number.");
-            return;
+        JPanel mid = new JPanel(new GridLayout(2, 1));
+        mid.setOpaque(false);
+        if (free) {
+            mid.add(Theme.label("Ready for guests", Font.PLAIN, 14f, Theme.MUTED));
+            mid.add(Theme.label(" ", Font.PLAIN, 12f, Theme.MUTED));
+        } else {
+            mid.add(Theme.label(t.getCustomer().getName(), Font.BOLD, 16f, Theme.TEXT));
+            mid.add(Theme.label("Party of " + t.getCustomer().getPartySize(), Font.PLAIN, 13f, Theme.MUTED));
         }
-        manager.freeTable(tableNum);
-        updateOutput();
-        JOptionPane.showMessageDialog(frame, "Table " + tableNum + " is now free.");
+        card.add(mid, BorderLayout.CENTER);
+
+        if (!free) {
+            Theme.Btn free1 = new Theme.Btn("Free table", Theme.Kind.SECONDARY);
+            free1.setName("free-" + t.getTableNumber());
+            free1.addActionListener(e -> {
+                manager.freeTable(t.getTableNumber());
+                refresh();
+                status("Table " + t.getTableNumber() + " is now available");
+            });
+            card.add(free1, BorderLayout.SOUTH);
+        }
+        return card;
     }
 
-    private void updateOutput() {
-        outputArea.setText(manager.getTablesInfo() + "\n" + manager.getQueueInfo());
+    private void refresh() {
+        tablesPanel.removeAll();
+        int freeTables = 0;
+        for (Table t : manager.getTables()) {
+            if (t.isAvailable()) freeTables++;
+            tablesPanel.add(tableCard(t));
+        }
+        freeCount.setText(freeTables + " of " + TABLES + " free");
+        tablesPanel.revalidate();
+        tablesPanel.repaint();
+
+        waitingPanel.removeAll();
+        List<Customer> waiting = manager.getWaiting();
+        if (waiting.isEmpty()) {
+            JLabel l = Theme.label("Nobody is waiting", Font.PLAIN, 14f, Theme.MUTED);
+            l.setBorder(BorderFactory.createEmptyBorder(24, 0, 0, 0));
+            l.setAlignmentX(Component.LEFT_ALIGNMENT);
+            waitingPanel.add(l);
+        }
+        int i = 1;
+        for (Customer c : waiting) {
+            JPanel row = new JPanel(new BorderLayout(10, 0));
+            row.setOpaque(false);
+            row.setBorder(BorderFactory.createEmptyBorder(8, 0, 8, 0));
+            row.setMaximumSize(new Dimension(Integer.MAX_VALUE, 48));
+            row.setAlignmentX(Component.LEFT_ALIGNMENT);
+            row.add(new Theme.Chip("#" + i++, Theme.PRIMARY_SOFT, Theme.PRIMARY) , BorderLayout.WEST);
+            row.add(Theme.label(c.getName(), Font.BOLD, 14f, Theme.TEXT), BorderLayout.CENTER);
+            row.add(new Theme.Chip(c.getPartySize() + " ppl", Theme.BORDER, Theme.TEXT), BorderLayout.EAST);
+            waitingPanel.add(row);
+            waitingPanel.add(Theme.divider());
+        }
+        waitingCount.setText(waiting.size() + " waiting");
+        waitingPanel.revalidate();
+        waitingPanel.repaint();
     }
 
+    private void status(String msg) {
+        statusLabel.setText(msg);
+    }
 }

@@ -72,6 +72,14 @@ public class QueueManager {
         }
     }
 
+    public List<Table> getTables() {
+        return Collections.unmodifiableList(tables);
+    }
+
+    public List<Customer> getWaiting() {
+        return new ArrayList<>(customerQueue);
+    }
+
     public String getTablesInfo() {
         StringBuilder sb = new StringBuilder("=== Tables ===\n");
         for (Table table : tables) {

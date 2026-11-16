@@ -1,4 +1,7 @@
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class Inventory {
@@ -34,6 +37,11 @@ public class Inventory {
 
     public Item getItem(String name) {
         return items.get(name.toLowerCase());
+    }
+
+    /** Read-only snapshot of all items, used by the GUI product table. */
+    public List<Item> getItems() {
+        return new ArrayList<>(items.values());
     }
 
     public void printInventory() {
