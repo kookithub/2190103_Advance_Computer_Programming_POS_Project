@@ -1,6 +1,8 @@
 # Restaurant POS & Queue System (Java Swing)
 
-A desktop **Point-of-Sale and table-queue application for a small restaurant/bakery**, written in plain Java with Swing. It has two modules behind a launcher menu: a **cashier** (inventory, orders, discounts) and a **waiting-queue / table manager** (FIFO queue, seat the next party, free a table). The project is built to demonstrate object-oriented design: the **Strategy**, **Singleton** and **Factory** patterns, plus encapsulation, abstraction and polymorphism.
+A desktop **point-of-sale and table-queue app for a small restaurant or bakery**, written in plain Java with Swing. You start from a small menu and pick one of two parts: the **cashier** (inventory, orders, discounts) or the **queue and table manager** (a first-come-first-served waiting list, seat the next party, free up a table).
+
+This was for 2190103 Advance Computer Programming, so a big part of the point was practising object-oriented design: the **Strategy**, **Singleton** and **Factory** patterns, plus encapsulation, abstraction and polymorphism.
 
 ![Demo](docs/images/demo.gif)
 
@@ -11,39 +13,38 @@ A desktop **Point-of-Sale and table-queue application for a small restaurant/bak
 4. [Architecture](#architecture)
 5. [How it works](#how-it-works)
 6. [OOP concepts and design patterns](#oop-concepts-and-design-patterns)
-7. [Results / outputs](#results--outputs)
+7. [Example run](#example-run)
 8. [How to run](#how-to-run)
 9. [Repo structure](#repo-structure)
 10. [Limitations](#limitations)
-11. [Project Facts (for resume)](#project-facts-for-resume)
 
 ## Features
 
 **Launcher (`MainApp`)**
-- Modern flat launcher with two module cards: *Cashier* and *Queue & Tables*.
+- A clean, flat start screen with two cards: *Cashier* and *Queue & Tables*.
 
-**Cashier module (`RestaurantGUI`)**
-- Product tiles (name, price, live stock chip: green "in stock", amber "N left" when 3 or fewer, red "Sold out"); six seeded demo products (`Macaron1`-`Macaron6`, one of them sold out).
-- **Tap-to-add order**: each tap adds one unit; the order panel shows lines with a `- qty +` stepper, per-line subtotal and an item count. Stock is validated against what is already in the order; reducing a line to 0 removes it.
-- **Discount pills**: None / Percent / Coupon / VAT-free, each a separate strategy class, with live subtotal, discount and total:
-  - *Percent* - user-entered percentage off
-  - *Coupon* - fixed amount off, only if the bill reaches a minimum spend (the GUI sets the minimum to 4x the coupon amount)
-  - *VAT-free* - removes 7 % VAT (`price / 1.07`)
-- **Checkout & print receipt**: deducts stock through `Cashier.processOrder`, shows a paper-style receipt dialog (date/time, lines, subtotal, discount, total) and refreshes the tiles.
-- **+ New item** dialog to add a product or restock an existing one (validated inputs).
+**Cashier (`RestaurantGUI`)**
+- Product tiles with name, price and a stock badge: green "in stock", amber "N left" once there are 3 or fewer, red "Sold out". It starts with six demo products (`Macaron1`-`Macaron6`), one of them already sold out.
+- **Tap to add**: each tap adds one. The order panel lists each item with a `- qty +` stepper, a line subtotal and an item count. It won't let you add more than what's in stock, and taking a line down to 0 removes it.
+- **Discount buttons**: None / Percent / Coupon / VAT-free. Each one is its own strategy class, and the subtotal, discount and total update as you go:
+  - *Percent*: take off whatever percentage you type in
+  - *Coupon*: a fixed amount off, but only if the bill is big enough (the GUI sets the minimum to 4x the coupon amount)
+  - *VAT-free*: takes out the 7 % VAT (`price / 1.07`)
+- **Checkout and receipt**: stock gets taken off through `Cashier.processOrder`, a paper-style receipt pops up (date/time, items, subtotal, discount, total), and the tiles update.
+- **+ New item** lets you add a new product or restock an existing one (with input checks).
 
-**Queue module (`QueueGUI`)**
-- Add a party (name + size stepper, Enter key works) to a FIFO waiting list.
-- **Seat next customer**: dequeues the head of the queue and seats them at the first free table; status line reports when nobody is waiting or no table is free.
-- Five table cards with status chip (Available / Occupied), guest name, party size and a per-table **Free table** button.
-- Waiting list shows queue position (#1, #2, ...) and party size; header shows "N of 5 free" and "N waiting".
+**Queue (`QueueGUI`)**
+- Add a party (name and party size; pressing Enter works too) to the waiting list.
+- **Seat next customer** takes whoever's first in line and puts them at the first free table. If nobody's waiting or every table is taken, the status line tells you.
+- Five table cards, each showing Available / Occupied, the guest's name, the party size and a **Free table** button.
+- The waiting list shows each party's place in line (#1, #2, ...) and size. The header shows "N of 5 free" and "N waiting".
 
 **UI toolkit (`Theme`)**
-- Small pure-Swing design system: colour palette, font fallback (Inter / Segoe UI / Helvetica Neue / Roboto / Arial), rounded cards with soft shadows, flat buttons with hover/pressed states, chips, stepper and rounded text fields - all custom-painted with `Graphics2D` anti-aliasing, no third-party look-and-feel library.
+- My own small design system in pure Swing: a colour palette, font fallbacks (Inter / Segoe UI / Helvetica Neue / Roboto / Arial), rounded cards with soft shadows, flat buttons with hover and pressed states, chips, a stepper and rounded text fields. All of it is drawn by hand with anti-aliased `Graphics2D`, no third-party look-and-feel.
 
 ## Screenshots
 
-Captured from the real application running under a virtual display (Xvfb), driven by a script that clicks the tiles/buttons and types into the fields. Seed/demo data only.
+Taken from the actual app running on a virtual display (Xvfb), with a script clicking the buttons and typing into the fields. Demo data only.
 
 | Launcher | Cashier (empty order) |
 |---|---|
@@ -65,12 +66,12 @@ Captured from the real application running under a virtual display (Xvfb), drive
 |---|---|
 | ![Tables full](docs/images/09-queue-tables-full.png) | ![After free](docs/images/10-queue-after-free.png) |
 
-> Note: there is **no login, user-account or admin panel** - access control is not implemented. See [Limitations](#limitations).
+> There's **no login, user accounts or admin panel**. See [Limitations](#limitations).
 
 ## Tech stack
-- **Language:** Java (standard library only – `javax.swing`, `java.awt`, `java.util`)
-- **UI:** Swing (`JFrame`, `JDialog`, `BorderLayout`, `GridLayout`, `BoxLayout`) with a custom-painted flat theme (`Theme.java`, `Graphics2D`)
-- **Build:** none – compile the `.java` files directly with `javac`
+- **Language:** Java, standard library only (`javax.swing`, `java.awt`, `java.util`)
+- **UI:** Swing (`JFrame`, `JDialog`, `BorderLayout`, `GridLayout`, `BoxLayout`) with a hand-drawn flat theme (`Theme.java`, `Graphics2D`)
+- **Build:** nothing special, just compile the `.java` files with `javac`
 - **Dependencies:** none
 
 ## Architecture
@@ -191,47 +192,47 @@ classDiagram
     Table --> Customer
 ```
 
-The code separates **domain logic** (`Item`, `Inventory`, `Cashier`, discount strategies, `Customer`, `Table`, `QueueManager`) from **presentation** (`MainApp`, `RestaurantGUI`, `QueueGUI`). Domain classes have no Swing dependency, so they can be unit-tested or reused by another UI.
+I kept the **business logic** (`Item`, `Inventory`, `Cashier`, the discount strategies, `Customer`, `Table`, `QueueManager`) apart from the **screens** (`MainApp`, `RestaurantGUI`, `QueueGUI`). None of the logic classes touch Swing, so they could be tested on their own or used with a different UI.
 
 ## How it works
 
-**Ordering flow**
-1. In `RestaurantGUI` the cashier taps a product tile; the GUI checks `Inventory.isInStock(name, cartQty + 1)` and adds/increments the line in an in-memory cart (`LinkedHashMap<String,Integer>`); the stepper on each line changes the quantity.
-2. On *Checkout*, for each cart line `Cashier.processOrder()` lower-cases the name, looks the item up in `Inventory`, checks stock, computes `price x qty` and calls `reduceStock`.
-3. The GUI renders the receipt (subtotal, discount type, total), clears the cart and refreshes the product table.
+**Ordering**
+1. In `RestaurantGUI` you tap a product. The GUI checks `Inventory.isInStock(name, cartQty + 1)` and adds it to the cart (a `LinkedHashMap<String,Integer>`), or bumps the quantity. The stepper on each line changes it too.
+2. On *Checkout*, `Cashier.processOrder()` handles each line: it lower-cases the name, looks the item up in `Inventory`, checks the stock, works out `price x qty` and calls `reduceStock`.
+3. The GUI shows the receipt (subtotal, discount type, total), empties the cart and refreshes the products.
 
-**Discount flow**
-1. User picks a discount pill; the GUI instantiates the matching `discountStrategy` implementation and calls `applyDiscount(subtotal)` – the call site does not care which implementation it holds. Totals refresh live.
-2. `PercentDiscountStrategy`: `total x (100 - p) / 100`. `CouponDiscountStrategy`: `max(0, total - coupon)` if `total >= minimumSpend`, else unchanged. `VATFreeDiscountStrategy`: `total / (1 + vatRate)` with 7 % in the GUI.
-3. The discounted total is what is printed on the receipt at checkout.
+**Discounts**
+1. When you pick a discount, the GUI creates the matching `discountStrategy` and calls `applyDiscount(subtotal)`. The calling code doesn't need to know which one it has. Totals update right away.
+2. `PercentDiscountStrategy`: `total x (100 - p) / 100`. `CouponDiscountStrategy`: `max(0, total - coupon)` if `total >= minimumSpend`, otherwise nothing changes. `VATFreeDiscountStrategy`: `total / (1 + vatRate)`, with 7 % in the GUI.
+3. The discounted total is what ends up on the receipt.
 
-**Queue flow**
-1. `QueueManager` is a Singleton created with 5 tables; the waiting list is a `Queue<Customer>` backed by `LinkedList` (FIFO).
-2. `seatNextCustomer()` polls the queue head and seats it at the first table (linear scan) whose `isAvailable()` is true; if none is free the customer stays queued.
-3. `freeTable(n)` clears the customer and marks the table available.
+**Queue**
+1. `QueueManager` is a Singleton set up with 5 tables. The waiting list is a `Queue<Customer>` on top of a `LinkedList`, so first in, first out.
+2. `seatNextCustomer()` takes the first party in line and seats them at the first table where `isAvailable()` is true. If no table is free, they stay in line.
+3. `freeTable(n)` clears the guest and marks the table as available again.
 
 ## OOP concepts and design patterns
 
 | Concept | Where |
 |---|---|
-| **Strategy pattern** | `discountStrategy` interface with `PercentDiscountStrategy`, `CouponDiscountStrategy`, `VATFreeDiscountStrategy` – new discount types can be added without touching `RestaurantGUI` logic beyond the selector |
-| **Singleton pattern** | `QueueManager.getInstance(int)` – private constructor, single shared instance of the queue and table state |
-| **Factory pattern** | `ItemFactory.createItem(...)` used by `Inventory.addItem` to construct `Item`s |
-| **Encapsulation** | private fields + getters in `Item`, `Customer`, `Table`; stock can only change through `addStock`/`reduceStock` (which refuses to go negative) |
-| **Abstraction / interface** | `discountStrategy` hides how each discount is computed |
-| **Polymorphism** | `discountStrategy coupon = new CouponDiscountStrategy(...)` – runtime dispatch of `applyDiscount` |
-| **Composition** | `Cashier` has an `Inventory`; `Inventory` has many `Item`s; `QueueManager` has `Table`s and `Customer`s; `Table` has a `Customer` |
+| **Strategy pattern** | `discountStrategy` interface with `PercentDiscountStrategy`, `CouponDiscountStrategy`, `VATFreeDiscountStrategy`. Adding a new kind of discount doesn't need changes in `RestaurantGUI` apart from the selector |
+| **Singleton pattern** | `QueueManager.getInstance(int)`: private constructor, one shared copy of the queue and tables |
+| **Factory pattern** | `ItemFactory.createItem(...)`, used by `Inventory.addItem` to make `Item`s |
+| **Encapsulation** | private fields with getters in `Item`, `Customer`, `Table`; stock only changes through `addStock`/`reduceStock`, which won't go below zero |
+| **Abstraction / interface** | `discountStrategy` hides how each discount is worked out |
+| **Polymorphism** | `discountStrategy coupon = new CouponDiscountStrategy(...)`, with `applyDiscount` picked at runtime |
+| **Composition** | `Cashier` has an `Inventory`; `Inventory` has many `Item`s; `QueueManager` has `Table`s and `Customer`s; a `Table` has a `Customer` |
 | **Custom components / inheritance** | `Theme.Card`, `Theme.Btn`, `Theme.Chip`, `Theme.Stepper` extend Swing components and override `paintComponent`; `ProductTile` extends `JButton` |
 | **Collections** | `HashMap<String,Item>` (inventory), `LinkedList`/`Queue` (waiting list), `ArrayList` (tables) |
-| **Event-driven GUI** | `ActionListener`s via lambdas/method references, mouse hover listeners, `SwingUtilities.invokeLater` on start-up |
+| **Event-driven GUI** | `ActionListener`s with lambdas and method references, mouse hover listeners, `SwingUtilities.invokeLater` at start-up |
 
-## Results / outputs
-- Console log mirrors the GUI, e.g. `4 x macaron1 = $12.00`, `Alice (Party of 2) seated at Table 1`.
-- Verified in the screenshot run: an order of 4 x Macaron1 ($12.00) + 2 x Macaron2 ($7.00) + 1 x Macaron3 ($4.00) = $23.00; a 10 % discount produced **$20.70** on the receipt and Macaron1 stock dropped from 10 to 6; five parties seated at tables 1-5 in arrival order; after freeing table 2 the next waiting party (Frank) took it, leaving Grace in the queue.
+## Example run
+- The console prints the same things the GUI does, for example `4 x macaron1 = $12.00` and `Alice (Party of 2) seated at Table 1`.
+- In the run used for the screenshots: 4 x Macaron1 ($12.00) + 2 x Macaron2 ($7.00) + 1 x Macaron3 ($4.00) came to $23.00, and with 10 % off the receipt said **$20.70**. Macaron1 stock went from 10 to 6. Five parties got tables 1-5 in the order they arrived. After table 2 was freed, the next party (Frank) got it and Grace was left waiting.
 
 ## How to run
 
-Requires a JDK (11+ recommended) and a graphical display.
+You need a JDK (11 or newer is best) and a screen.
 
 ```bash
 git clone https://github.com/kookithub/2190103_Advance_Computer_Programming_POS_Project.git
@@ -240,18 +241,18 @@ javac *.java
 java MainApp
 ```
 
-Headless / CI (this is how the screenshots were made): `xvfb-run -a java MainApp`.
+Without a screen (that's how the screenshots were made): `xvfb-run -a java MainApp`.
 
 ## Repo structure
 ```
 .
-├── Theme.java                    # custom-painted flat UI toolkit (cards, buttons, chips, stepper)
+├── Theme.java                    # hand-drawn flat UI toolkit (cards, buttons, chips, stepper)
 ├── MainApp.java                  # launcher / entry point (main)
 ├── RestaurantGUI.java            # cashier window (products, cart, receipt)
-├── QueueGUI.java                 # queue + table-card window
+├── QueueGUI.java                 # queue + table cards window
 ├── Cashier.java                  # order processing
 ├── Inventory.java                # item store (HashMap)
-├── Item.java                     # product entity
+├── Item.java                     # product
 ├── ItemFactory.java              # Factory
 ├── discountStrategy.java         # Strategy interface
 ├── PercentDiscountStrategy.java
@@ -264,19 +265,8 @@ Headless / CI (this is how the screenshots were made): `xvfb-run -a java MainApp
 ```
 
 ## Limitations
-- No persistence: inventory and queue live in memory and reset on restart.
-- No authentication, roles, admin panel, sales reports or physical receipt printing (the receipt is an on-screen dialog).
-- Discounts apply to the whole bill only (one discount per order).
-- Table assignment ignores party size; number of tables (5) is a constant in `QueueGUI`.
-- No automated tests; interface name `discountStrategy` does not follow Java's `PascalCase` convention.
-
-## Project Facts (for resume)
-
-- **Course:** 2190103 – Advance Computer Programming
-- **Languages / frameworks / libraries:** Java; Swing/AWT (`javax.swing`, `java.awt`); `java.util` collections; no third-party dependencies, no build tool
-- **Size:** 15 `.java` files, 1,568 lines of Java; 14 top-level classes + 1 interface (plus nested UI component classes in `Theme` and `ProductTile`); 3 `discountStrategy` implementations; 2 GUI windows + launcher (tile catalogue, order lines, receipt, table-card UI); 0 tests
-- **Key features:** inventory management with stock validation; cart-based order processing with on-screen receipt; three switchable discount strategies (percent / coupon with minimum spend / 7 % VAT removal); FIFO customer waiting queue; automatic seating at first free table among 5 tables; free-table action
-- **Algorithms / design patterns:** Strategy, Singleton, Factory; FIFO queue (`LinkedList`); hash-map lookup with case-normalised keys; linear scan for first available table
-- **Measurable numbers:** 6 seeded demo products (stock 10/8/5/12/3/0); 5 tables; VAT rate 7 %; coupon minimum spend = 4 x coupon value (in the GUI); sample run: $23.00 order -> $20.70 after 10 % discount. Performance/concurrency figures: not applicable (single-threaded desktop app)
-- **Hard problems and solutions:** keeping a single consistent queue/table state across screens (solved with Singleton `QueueManager`); supporting several pricing rules without `if/else` in the cashier (solved with the Strategy interface); preventing negative stock (stock check before `reduceStock`).
-- **Outcome:** working two-module desktop app launched from one menu
+- Nothing is saved: inventory and the queue are in memory and reset when you restart.
+- No login, roles, admin panel, sales reports or real receipt printing (the receipt is just an on-screen dialog).
+- A discount applies to the whole bill, and only one per order.
+- Seating doesn't look at party size, and the number of tables (5) is a constant in `QueueGUI`.
+- No automated tests. Also, the interface name `discountStrategy` should really be `PascalCase` by Java convention.
